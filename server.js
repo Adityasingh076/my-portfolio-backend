@@ -34,12 +34,11 @@ const imageStorage = new CloudinaryStorage({
 
 const resumeStorage = new CloudinaryStorage({
   cloudinary,
-  params: async (req, file) => ({
+  params: {
     folder: 'portfolio/resume',
     allowed_formats: ['pdf'],
-    resource_type: 'raw',
-    public_id: 'resume_' + Date.now()
-  })
+    resource_type: 'raw'
+  }
 });
 
 const upload = multer({ storage: imageStorage });
@@ -209,12 +208,9 @@ app.get('/api/resume/download', async (req, res) => {
   try {
     const result = await pool.query('SELECT file_path FROM resume LIMIT 1');
     if (!result.rows[0]?.file_path) return res.status(404).json({ error: 'No resume uploaded' });
-    
-    // Cloudinary raw URL pe fl_attachment flag lagao — forced download hoga
+    // fl_attachment:filename — proper PDF naam se download hoga
     let url = result.rows[0].file_path;
-    // Insert fl_attachment into cloudinary URL for forced download
-    url = url.replace('/upload/', '/upload/fl_attachment/');
-    
+    url = url.replace('/upload/', '/upload/fl_attachment:Aditya_Singh_Resume.pdf/');
     res.redirect(url);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
