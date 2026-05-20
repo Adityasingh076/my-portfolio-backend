@@ -208,10 +208,16 @@ app.get('/api/resume/download', async (req, res) => {
   try {
     const result = await pool.query('SELECT file_path FROM resume LIMIT 1');
     if (!result.rows[0]?.file_path) return res.status(404).json({ error: 'No resume uploaded' });
-    // fl_attachment:filename — proper PDF naam se download hoga
-    let url = result.rows[0].file_path;
-    url = url.replace('/upload/', '/upload/fl_attachment:Aditya_Singh_Resume.pdf/');
-    res.redirect(url);
+    const fileUrl = result.rows[0].file_path;
+    // Cloudinary se file fetch karke proper headers ke saath serve karo
+    const https = require('https');
+    const http = require('http');
+    const requester = fileUrl.startsWith('https') ? https : http;
+    res.setHeader('Content-Disposition', 'attachment; filename="Aditya_Singh_Resume.pdf"');
+    res.setHeader('Content-Type', 'application/pdf');
+    requester.get(fileUrl, (fileRes) => {
+      fileRes.pipe(res);
+    }).on('error', () => res.status(500).json({ error: 'Download failed' }));
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
