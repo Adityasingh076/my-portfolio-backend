@@ -14,13 +14,11 @@ app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ─── DB (tumhara existing connection — unchanged) ─────────
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
 
-// ─── UPLOADS FOLDER ───────────────────────────────────────
 const uploadsDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
@@ -30,7 +28,6 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// ─── AUTH MIDDLEWARE ──────────────────────────────────────
 global.activeSessions = global.activeSessions || new Set();
 
 function requireAuth(req, res, next) {
@@ -41,7 +38,6 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// ─── PROFILE ──────────────────────────────────────────────
 app.get('/api/profile', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM profile LIMIT 1');
@@ -71,7 +67,6 @@ app.put('/api/profile', requireAuth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ─── PROJECTS ─────────────────────────────────────────────
 app.get('/api/projects', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM projects ORDER BY created_at DESC');
@@ -113,7 +108,6 @@ app.delete('/api/projects/:id', requireAuth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ─── CERTIFICATES ─────────────────────────────────────────
 app.get('/api/certificates', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM certificates ORDER BY created_at DESC');
@@ -141,7 +135,6 @@ app.delete('/api/certificates/:id', requireAuth, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ─── RESUME ───────────────────────────────────────────────
 app.get('/api/resume', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM resume LIMIT 1');
@@ -171,7 +164,6 @@ app.get('/api/resume/download', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ─── CONTACT ──────────────────────────────────────────────
 app.post('/api/contact', async (req, res) => {
   try {
     const { name, email, message } = req.body;
@@ -180,7 +172,6 @@ app.post('/api/contact', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ─── STATS ────────────────────────────────────────────────
 app.get('/api/stats', async (req, res) => {
   try {
     const [proj, cert, prof] = await Promise.all([
@@ -196,7 +187,6 @@ app.get('/api/stats', async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ─── ADMIN LOGIN / LOGOUT ─────────────────────────────────
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body;
   if (password !== (process.env.ADMIN_PASSWORD || 'aditya@2025')) {
@@ -213,7 +203,6 @@ app.post('/api/admin/logout', (req, res) => {
   res.json({ success: true });
 });
 
-// ─── SERVER START ─────────────────────────────────────────
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
